@@ -1,67 +1,58 @@
 from __future__ import print_function
-import torch, csv
-import numpy as np
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import StepLR
 from models.Model import Net
+from sinodataset import SinoDataset, SinoTestDataset
+from torch.utils.data.dataloader import DataLoader
 
 def main():
-    #
-    # Setup
+    # 
+    # 初始化模型、優化器、損失函數 取得 cuda device, 設定種子以重現結果
     #
     torch.manual_seed(1)
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    model = Net().to(device)
+    epochs = 10
+    lossfunction = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=5e-6, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
     #
-    # Initial
+    # 初始化 DataLoaders, Datasets
     #
-    model = Net()#.to(device)
-    lr = 5e-5
-    epochs = 1500
-    MSELoss = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=lr)
+    train_data = SinoDataset('data/training_revised.csv')
+    train_loader = DataLoader(dataset=train_data, batch_size=64, shuffle=False, num_workers=4)
+    test_data = SinoTestDataset('data/public_revised.csv')
+    test_loader = DataLoader(dataset=test_data, batch_size=1, shuffle=False, num_workers=4)
 
     #
-    # Load data
-    #
-    data = []
-    with open('processed.csv', newline='') as csvfile:
-        # 讀取 CSV 檔案內容
-        rows = csv.reader(csvfile)
-        for row in rows:
-            data.append(
-                list(map(float, row))
-            )
-
-    #
-    # Train
+    # 開始訓練
     #
     for epoch in range(epochs):
-        for row in data:
+        iter_count, epoch_loss = 0, 0
+        for data, lable in train_loader:
             model.train()
-
-            x = torch.from_numpy(np.array(row[:2])).float()
-            y = torch.from_numpy(np.array(row[2])).float()
-
-            # 不用再手動做 output 了
-            # yhat = a + b * x_tensor
-            yhat = model(x)
-            loss = MSELoss(
-                torch.reshape(y, [1]),
-                yhat
-            )
+            data = data.to(device)
+            lable = lable.to(device)
+            yhat = model(data)
+            loss = lossfunction(lable, yhat)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-            
-            print(f"x={row[0]}, y={row[1]}, z={row[2]}, pred={yhat}")
-            print(f"loss={loss.item()}")
 
+            iter_count+=1
+            epoch_loss+=loss.item()
+            print(f"iter={iter_count}, iter_loss={loss.item()}")
+        print(f"Epochs={epoch}, Epoch_loss={epoch_loss/iter_count}")
+    
+    #
+    # 測試
+    #
+    # for data, lable in test_loader:
+    #     model.train()
+    #     data = data.to(device)
+    #     yhat = model(data)
+    #     print(yhat)
 
 if __name__ == '__main__':
     main()

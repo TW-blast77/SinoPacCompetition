@@ -50,6 +50,7 @@ if __name__ == '__main__':
     TRAIN_BATCH_SIZE    = int(os.getenv("TRAIN_BATCH_SIZE", 64))
     VALID_BATCH_SIZE    = int(os.getenv("VALID_BATCH_SIZE", 64))
     TRAIN_CSV_PATH      = os.getenv("TRAIN_CSV_PATH", "")
+    TRAIN_MODEL_PT_PATH = os.getenv("TRAIN_MODEL_PT_PATH", "")
 
 
     torch.manual_seed(TORCH_SEED)
@@ -69,3 +70,5 @@ if __name__ == '__main__':
         train_loss = train(model, train_loader, loss_function, optimizer)
         valid_loss = valid(model, valid_loader, loss_function)
         print(f"\nEpochs={epoch}, avg_train_loss={train_loss}, avg_valid_loss={valid_loss}\n")
+
+    torch.save(model, TRAIN_MODEL_PT_PATH)

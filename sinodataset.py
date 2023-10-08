@@ -39,9 +39,6 @@ class SinoTestDataset(torch.utils.data.dataset.Dataset):
             "主要用途", "主要建材", "建物型態", "屋齡", "建物面積", "車位面積",
             "車位個數", "橫坐標", "縱坐標", "備註", "主建物面積", "陽台面積", "附屬建物面積"
         ]
-        self.__label_cols = [
-            "單價"
-        ]
         self.__df = pd.read_csv(csv_path)
 
     def __getitem__(self, index):
@@ -50,7 +47,7 @@ class SinoTestDataset(torch.utils.data.dataset.Dataset):
             cast_to_float,
             feature_row
         ))
-        return torch.Tensor(float_feature_row), 0
+        return torch.Tensor(float_feature_row), index
     
     def __len__(self):
         return self.__df.__len__()

@@ -1,4 +1,10 @@
+# Python env
 venv/
 __pycache__/
+
+# SinoPac Competition
 data/
 external_data/
+
+# env
+.env

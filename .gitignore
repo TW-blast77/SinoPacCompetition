@@ -8,3 +8,6 @@ external_data/
 
 # env
 .env
+
+# Pytorch
+*.pt
